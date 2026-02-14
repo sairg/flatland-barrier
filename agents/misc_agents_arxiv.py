@@ -5,7 +5,9 @@ import numpy as np, random
 from collections import defaultdict, Counter
 import time, math
 
-from flatland.dir_SMAs import SMAs
+# from flatland.dir_SMAs import SMAs
+from flatland.SMAs.SMAs import DYAL, DistroQs
+
 from flatland.envs.env_utils import get_move_from_to
 
 
@@ -902,7 +904,11 @@ class ProbMap(PureStrategy):
         super().__init__(shared_memory)
         #self.loc_to_memory = {}
         self.plan = {}
-        self.prior_sma = SMAs.DYAL()
+
+        # For the 3 object types, Empty, Barrier, Food.
+        # (currently not used, just informational)
+        # self.prior_sma = SMAs.DYAL()
+        self.prior_sma = DYAL()
 
         self.current_goal = None
         self.current_budget = 0
@@ -1222,10 +1228,12 @@ class ProbMap(PureStrategy):
         is_food = self.shared_memory.env.is_food_at_loc(tx, ty)
         self.update_predictions(
             (x, y), is_barrier, is_food)
+        
         if update_prior:
             #if is_food:
             #    print('HEREf prior is updated_for_food!', self.get_today() )
             self.prior_update( is_barrier, is_food )
+            
         self.loc_memory_update( (x, y), is_barrier, is_food )
 
     # Update the predictions, as a function of memory type
@@ -1273,7 +1281,7 @@ class ProbMap(PureStrategy):
         # p1 = memo.get_prob(item)
         prediction = memo.get_remembered_item()
         
-        p2 = self.prior_sma.get_prob(item)
+        #p2 = self.prior_sma.get_prob(item)
         
         # self.update_comparison_old(item, p1, p2, diff)
         self.update_mem_type_distro(item, prediction, diff)
@@ -1845,10 +1853,13 @@ class ProbMap(PureStrategy):
                         if pit:
                             print('# HERE88, w or loss is: %.3f' % w)
                 else:
-                    w = self.distance_to_prior(distro)
-                    if pit:
-                        print('# Today: %d, dist:%.2f, after: %s' % (
-                            today, w, distro_str(distro)))
+                    # for now, skip this.
+                    assert False
+                    if 0:
+                        w = self.distance_to_prior(distro)
+                        if pit:
+                            print('# Today: %d, dist:%.2f, after: %s' % (
+                                today, w, distro_str(distro)))
                 distros.append( ( distro, w, diff, mem_type ) )
 
         return self.pick_and_aggregate(distros, use_loss=use_loss)
@@ -1885,7 +1896,8 @@ class ProbMap(PureStrategy):
             distro2[item] = rem1 * self.prior_sma.get_prob(item) / rem2
         return distro2
 
-    
+
+    # experimental/not used.
     # could be KL, or quadratic, or use the binomial tail
     def distance_to_prior(self, distro):
         # Do quadratic loss for starters..
@@ -2502,16 +2514,11 @@ def max_prob_entry(distro):
     return max_s, max_v
 
 def allocate_fractional_Q(cap=StrategyParams.inday_q_cap):
-    return SMAs.DistroQs( q_capacity=cap )
+    # queue of distribution.
+    # return SMAs.DistroQs( q_capacity=cap )
+    return DistroQs( q_capacity=cap )
     
-    """
-    return SMAs.TimeStampQs(
-        q_capacity=10,
-        with_proportions=True,
-        use_plain_biased=True,
-        # For plain averaging of the queue distros
-        do_same_start_time=True)
-    """
+
 
 # >class
 class Scalar_EMA:
