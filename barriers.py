@@ -33,7 +33,9 @@ from flatland.envs.base_grid_env import BaseGridEnv
 import flatland.make_envs as make_envs
 
 from envs.barriers_env import BarriersEnv
-from envs import EnvUtils
+
+# from envs import EnvUtils
+from envs.env_utils import get_env_with_a_path
 
 from agents.misc_agents_arxiv import CompositeAgent, StrategyParams
 
